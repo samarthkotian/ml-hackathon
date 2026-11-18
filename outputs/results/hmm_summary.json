@@ -1,0 +1,13 @@
+{
+  "overall_clf_top1_accuracy": 0.8875782881002088,
+  "overall_hmm_top1_accuracy": 0.9112734864300627,
+  "overall_clf_macro_f1": 0.937095954773122,
+  "overall_hmm_macro_f1": 0.9506661313152948,
+  "mean_clf_route_continuity": 0.9853786140470776,
+  "mean_hmm_route_continuity": 0.9965881715813178,
+  "mean_clf_strict_1hop_continuity": 0.9497367325790103,
+  "mean_hmm_strict_1hop_continuity": 0.9763297341694838,
+  "mean_clf_seq_f1": 0.8815415309678964,
+  "mean_hmm_seq_f1": 0.9394290458440597,
+  "mean_viterbi_decode_ms": 156.95513001992367
+}

@@ -1,0 +1,14 @@
+{
+  "clf_weight": 1.6,
+  "dist_weight": 0.35,
+  "heading_weight": 0.85,
+  "sigma_emission_m": 12.0,
+  "beta_transition_m": 18.0,
+  "same_arc_bonus": 0.65,
+  "one_hop_bonus": 0.45,
+  "multi_hop_penalty": 1.15,
+  "backward_penalty": 3.5,
+  "uturn_penalty": 4.5,
+  "disconnected_penalty": 9.5,
+  "max_bfs_hops": 5
+}
