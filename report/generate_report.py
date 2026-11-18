@@ -117,6 +117,10 @@ def build_technical_report() -> str:
     with open(os.path.join(MODELS_DIR, "model_metadata.json"), "r", encoding="utf-8") as f:
         meta = json.load(f)
 
+    for frame in (models_df, trials_df, tuned_df, hmm_df):
+        if "evaluation_protocol" not in frame or not frame["evaluation_protocol"].eq("wta-lcs-v2").all():
+            raise ValueError("Historical metrics cannot generate a current report. Rerun training and Phase 2; see docs/EVALUATION_CORRECTIONS.md.")
+
     styles = getSampleStyleSheet()
     title_style = ParagraphStyle(
         "DocTitle",
@@ -198,6 +202,7 @@ def build_technical_report() -> str:
     story.append(Paragraph("PES UNIVERSITY — Department of Computer Science & Engineering (RR Campus)", subtitle_style))
     story.append(Paragraph("UE24CS352A: Machine Learning Hackathon — Consolidated Technical Report", subtitle_style))
     story.append(Paragraph("PATHSNAP: DISTRIBUTED MAP-MATCHING & ROUTE RECONSTRUCTION", title_style))
+    story.append(Paragraph("Evaluation protocol: wta-lcs-v2. Candidate F1 uses fixed winner-takes-all predictions; CV scores are unadjusted; continuity uses a shared hop limit; sequence F1 uses ordered LCS matches. Hardcoded Phase 1 baselines remain historical. Deployment illustrations do not verify a two-laptop run.", body_style))
 
     team_table_data = [
         ["Team ID", "SRN", "Student Name", "Role & Modules Owned"],
@@ -634,10 +639,11 @@ def build_technical_report() -> str:
         story.append(_styled_table(p2_tbl, col_widths=[1.45*inch, 0.72*inch, 0.72*inch, 0.72*inch, 0.72*inch, 0.72*inch, 0.68*inch, 0.68*inch, 0.68*inch], font_size=7.3))
         story.append(Spacer(1, 5))
 
-    story.append(Paragraph("7.2 Working Evaluator UI Dashboard (Laptop 2) & CMD Logs (Laptop 1)", h2_style))
-    story.append(_img(os.path.join(FIGURES_OUT_DIR, "ui_dashboard_screenshot.png"), width_in=6.2, max_height_in=2.7))
+    story.append(Paragraph("7.2 Historical UI and Terminal Illustrations (Not Deployment Evidence)", h2_style))
+    story.append(Paragraph("These drawings were generated from local function calls and a mock client address. They are not screenshots of a running two-laptop deployment. Run the HTTP verifier from Laptop 2 and capture the actual applications separately.", body_style))
+    story.append(_img(os.path.join(FIGURES_OUT_DIR, "ui_dashboard_illustration.png"), width_in=6.2, max_height_in=2.7))
     story.append(Spacer(1, 3))
-    story.append(_img(os.path.join(FIGURES_OUT_DIR, "cmd_api_response_screenshot.png"), width_in=6.2, max_height_in=2.6))
+    story.append(_img(os.path.join(FIGURES_OUT_DIR, "cmd_api_response_illustration.png"), width_in=6.2, max_height_in=2.6))
 
     # ==================== SECTION 8: ACADEMIC INTEGRITY & AI DISCLOSURE ====================
     story.append(Paragraph("8. Reproducibility, Academic Integrity & AI-Assistance Disclosure", h2_style))
@@ -645,7 +651,9 @@ def build_technical_report() -> str:
         Paragraph(
             "All experiments, model configurations, cross-validation splits (<font name='Courier'>RANDOM_SEED = 107</font>), "
             "Bayesian optimisation trials, HMM/Viterbi algorithms, and visualisations in this report were executed on the "
-            "provided dataset and are 100% reproducible via <font name='Courier'>python train.py</font> and <font name='Courier'>python predict.py</font>. "
+            "provided dataset. Reproduction requires the original training and evaluator datasets, the documented dependencies, "
+            "<font name='Courier'>python train.py</font>, <font name='Courier'>python src/phase2_experiments.py</font> and "
+            "<font name='Courier'>python predict.py</font>. Historical Phase 1 baselines and illustrations are not new measurements. "
             "In accordance with Section 8 of the submission guidelines, we disclose that an AI coding assistant was used to assist "
             "with code structuring, plotting boilerplate, and report formatting, while all experimental runs, metrics, and technical "
             "verifications were executed directly against the actual dataset.",

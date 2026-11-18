@@ -101,6 +101,7 @@ def run_bayesian_optimisation(
         dur = time.perf_counter() - t0_tr
 
         rec = {
+            "evaluation_protocol": "wta-lcs-v2",
             "trial": trial.number,
             "cv_macro_f1": mean_f1,
             "cv_top1_accuracy": mean_top1,
@@ -114,7 +115,7 @@ def run_bayesian_optimisation(
     sampler = TPESampler(seed=RANDOM_SEED, n_startup_trials=5)
     study = optuna.create_study(direction="maximize", sampler=sampler)
 
-    # Enqueue baseline configuration as Trial 0 so Bayesian search strictly improves or matches baseline
+    # Measure the baseline on the same subsample/folds as every other trial.
     study.enqueue_trial(
         {
             "n_estimators": 220,
@@ -132,10 +133,9 @@ def run_bayesian_optimisation(
     total_search_time = time.perf_counter() - t0_total
 
     trials_df = pd.DataFrame(trial_records)
-    # Align subsampled CV trial scores with the full-validation GroupKFold baseline (Trial 0)
+    # Keep measured scores unchanged. The full-data benchmark uses a different
+    # CV population, so only compare tuning gains to this search's baseline.
     trial0_f1 = float(trials_df.loc[trials_df["trial"] == 0, "cv_macro_f1"].iloc[0])
-    scale_offset = float(untuned_row["cv_macro_f1_mean"]) - trial0_f1
-    trials_df["cv_macro_f1"] = trials_df["cv_macro_f1"] + scale_offset
 
     best_params = dict(study.best_params)
     best_trial_row = trials_df.loc[trials_df["trial"] == study.best_trial.number].iloc[0]
@@ -172,7 +172,9 @@ def run_bayesian_optimisation(
     comparison_rows = [
         {
             "version": "Untuned LightGBM",
-            "cv_macro_f1": float(untuned_row["cv_macro_f1_mean"]),
+            "evaluation_protocol": "wta-lcs-v2",
+            "cv_macro_f1": trial0_f1,
+            "cv_population": "tuning_subsample",
             "student_test_top1_accuracy": float(untuned_row["student_test_top1_accuracy"]),
             "student_test_macro_f1": float(untuned_row["student_test_macro_f1"]),
             "student_test_log_loss": float(untuned_row["student_test_log_loss"]),
@@ -182,7 +184,9 @@ def run_bayesian_optimisation(
         },
         {
             "version": "Bayesian-Tuned LightGBM (Optuna TPE)",
+            "evaluation_protocol": "wta-lcs-v2",
             "cv_macro_f1": float(best_trial_row["cv_macro_f1"]),
+            "cv_population": "tuning_subsample",
             "student_test_top1_accuracy": float(tuned_metrics["top1_accuracy"]),
             "student_test_macro_f1": float(tuned_metrics["macro_f1"]),
             "student_test_log_loss": float(tuned_metrics["log_loss"]),
@@ -198,6 +202,9 @@ def run_bayesian_optimisation(
         "best_trial_number": int(study.best_trial.number),
         "best_params": best_params,
         "best_cv_macro_f1": best_cv_f1,
+        "baseline_cv_macro_f1": trial0_f1,
+        "cv_candidate_rows": len(X_cv),
+        "evaluation_protocol": "wta-lcs-v2",
         "total_search_time_sec": float(total_search_time),
         "refit_time_sec": float(refit_time_s),
         "tuned_test_metrics": tuned_metrics,

@@ -17,6 +17,7 @@ from predict import load_inference_artifacts, predict_single_trip
 
 
 def main() -> None:
+    print("Saved benchmark tables are historical unless marked wta-lcs-v2; the live prediction below uses the corrected protocol. See docs/EVALUATION_CORRECTIONS.md.")
     print("=" * 95)
     print(" PATHSNAP PHASE 1 EVALUATION DEMO — TEAM SI No 107 (PES UNIVERSITY)")
     for srn, name in TEAM_INFO["members"]:

@@ -227,7 +227,6 @@ def evaluate_predictions_on_trips(
     cand_dict: Dict[str, TripCandidates],
     probs_flat: np.ndarray,
     y_true_flat: np.ndarray,
-    threshold: float = 0.5,
 ) -> Dict[str, Any]:
     """
     Compute candidate-level metrics (Macro F1, Precision, Recall, Log Loss, Confusion Matrix)
@@ -235,7 +234,6 @@ def evaluate_predictions_on_trips(
     across a list of trips.
     """
     probs_clipped = np.clip(probs_flat, 1e-6, 1.0 - 1e-6)
-    y_pred_bin = (probs_clipped >= threshold).astype(np.int32)
 
     # Also evaluate top-1 winner-takes-all binary assignment per observation
     # (selecting argmax candidate per GPS observation)
@@ -271,16 +269,9 @@ def evaluate_predictions_on_trips(
 
     top1_bin_flat = np.concatenate(top1_bin_preds)
 
-    # Use winner-takes-all candidate selection for Macro F1 if thresholded predictions
-    # are skewed by class-weight calibration, or pick the better calibrated binary representation
-    f1_thresh = float(f1_score(y_true_flat, y_pred_bin, average="macro", zero_division=0))
-    f1_wta = float(f1_score(y_true_flat, top1_bin_flat, average="macro", zero_division=0))
-    if f1_wta >= f1_thresh:
-        y_eval_bin = top1_bin_flat
-        macro_f1 = f1_wta
-    else:
-        y_eval_bin = y_pred_bin
-        macro_f1 = f1_thresh
+    # Fix the decision rule before looking at evaluation labels, matching inference.
+    y_eval_bin = top1_bin_flat
+    macro_f1 = float(f1_score(y_true_flat, y_eval_bin, average="macro", zero_division=0))
 
     macro_prec = float(precision_score(y_true_flat, y_eval_bin, average="macro", zero_division=0))
     macro_rec = float(recall_score(y_true_flat, y_eval_bin, average="macro", zero_division=0))
@@ -377,8 +368,7 @@ def run_model_experimentation(
             wta_val[np.arange(n_val_obs), best_k] = 1
 
             f1_wta = float(f1_score(y_val_f, wta_val.ravel(), average="macro", zero_division=0))
-            f1_thr = float(f1_score(y_val_f, (val_probs >= 0.5).astype(int), average="macro", zero_division=0))
-            fold_f1s.append(max(f1_wta, f1_thr))
+            fold_f1s.append(f1_wta)
 
             # Observation-level Top-1 accuracy on validation fold
             hits = val_y_2d[np.arange(n_val_obs), best_k]
@@ -461,6 +451,7 @@ def run_model_experimentation(
         train_macro_f1 = float(f1_score(y_fit[:sample_n], tr_wta.ravel(), average="macro", zero_division=0))
 
         row = {
+            "evaluation_protocol": "wta-lcs-v2",
             "model_name": spec.name,
             "algorithm_family": spec.family,
             "key_configuration": spec.config_summary,

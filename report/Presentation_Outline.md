@@ -1,5 +1,9 @@
 # PathSnap: Phase 1 & Phase 2 Pitch & Viva Defense Guide — Team SI No 107
 
+> Historical presentation: the scores below predate the `wta-lcs-v2` corrections.
+> Old sequence F1 is unordered set overlap, and the included deployment figures
+> are illustrations. See `docs/EVALUATION_CORRECTIONS.md` before using these claims.
+
 **Course:** UE24CS352A: Machine Learning — PES University (RR Campus)  
 **Team Members:**
 1. **PES1UG24CS395 — Saatvik Gupta** (Data Architecture, Projection, 18m Spatial-Chord Bearing & Candidate Search)

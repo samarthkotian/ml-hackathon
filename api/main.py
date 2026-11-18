@@ -13,10 +13,10 @@ Run on Laptop 1:
 from datetime import datetime
 import os
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Literal
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from src.config import (
     DATA_ROOT,
@@ -26,6 +26,7 @@ from src.config import (
     TRAIN_DIR,
 )
 from src.data_loader import TripData, load_trip_from_dir
+from src.paths import TRIP_ID_PATTERN, safe_child, validate_trip_id
 from src.visualization import generate_folium_map_for_trip
 from predict import load_inference_artifacts, predict_single_trip
 
@@ -73,8 +74,12 @@ def _discover_evaluation_trips() -> List[Dict[str, str]]:
     for part_name, dpath in search_dirs:
         if os.path.exists(dpath):
             for tid in sorted(os.listdir(dpath)):
-                tdir = os.path.join(dpath, tid)
-                track_file = os.path.join(tdir, f"{tid}.track")
+                try:
+                    validate_trip_id(tid)
+                    tdir = safe_child(dpath, tid)
+                    track_file = safe_child(tdir, f"{tid}.track")
+                except ValueError:
+                    continue
                 if os.path.isdir(tdir) and os.path.exists(track_file) and (part_name, tid) not in seen:
                     seen.add((part_name, tid))
                     trips_info.append(
@@ -89,8 +94,8 @@ def _discover_evaluation_trips() -> List[Dict[str, str]]:
 
 
 class EvaluateRequest(BaseModel):
-    trip_id: str
-    partition: Optional[str] = None
+    trip_id: str = Field(pattern=TRIP_ID_PATTERN, min_length=1, max_length=64)
+    partition: Optional[Literal["train", "student_test", "evaluator_test"]] = None
     include_map_html: bool = True
 
 
@@ -159,14 +164,17 @@ def evaluate_trip_endpoint(req: EvaluateRequest, request: Request) -> Dict[str, 
         if t["trip_id"] == req.trip_id
         and (req.partition is None or t["partition"] == req.partition)
     ]
-    if not matched:
-        # Also allow looking up in train if explicitly requested for demo
-        tr_dir = os.path.join(TRAIN_DIR, req.trip_id)
-        if os.path.exists(os.path.join(tr_dir, f"{req.trip_id}.track")):
+    if not matched and req.partition == "train":
+        # Training trips are available only when explicitly requested.
+        try:
+            tr_dir = safe_child(TRAIN_DIR, req.trip_id)
+            track_file = safe_child(tr_dir, f"{req.trip_id}.track")
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        if os.path.exists(track_file):
             matched = [{"trip_id": req.trip_id, "partition": "train", "trip_dir": tr_dir}]
-        else:
-            print(f"  [ERROR] Trip '{req.trip_id}' not found on server!", flush=True)
-            raise HTTPException(status_code=404, detail=f"Trip '{req.trip_id}' not found.")
+    if not matched:
+        raise HTTPException(status_code=404, detail=f"Trip '{req.trip_id}' not found in the requested partition.")
 
     target = matched[0]
     model, hmm_cfg, meta = _get_artifacts()
@@ -210,6 +218,7 @@ def evaluate_trip_endpoint(req: EvaluateRequest, request: Request) -> Dict[str, 
             hmm_pred_arcs=np.array(pred_result["hmm_pred_arcs"], dtype=int),
             hmm_reconstructed_route=pred_result["reconstructed_route"],
             out_html_path=None,
+            include_reference=False,
         )
         map_html_str = fmap.get_root().render()
 
@@ -222,7 +231,7 @@ def evaluate_trip_endpoint(req: EvaluateRequest, request: Request) -> Dict[str, 
         "trip_id": trip_obj.trip_id,
         "partition": trip_obj.partition,
         "model_used": meta.get("selected_model_name", "Bayesian-Tuned LightGBM"),
-        "metrics": metrics,
+        "metrics": {k: v for k, v in metrics.items() if k not in {"output_route_file", "map_html_path"}},
         "reconstructed_route_arc_ids": pred_result["reconstructed_route"],
         "observation_predicted_arc_ids": pred_result["hmm_pred_arcs"],
         "folium_map_html": map_html_str,

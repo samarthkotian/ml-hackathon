@@ -38,6 +38,7 @@ from src.hmm_viterbi import (
     viterbi_decode_trip,
 )
 from src.visualization import generate_folium_map_for_trip
+from src.paths import safe_child, validate_trip_id
 
 
 def load_inference_artifacts() -> tuple[Any, HMMConfig, Dict[str, Any]]:
@@ -79,6 +80,7 @@ def predict_single_trip(
     extraction, classification, or Viterbi decoding. It is used strictly post-hoc
     for server-side evaluation metrics if present.
     """
+    validate_trip_id(trip.trip_id)
     t0 = time.perf_counter()
 
     # 1. Extract spatial/kinematic/topological features & candidates
@@ -107,8 +109,8 @@ def predict_single_trip(
     assert all(0 <= aid < n_arcs for aid in reconstructed_route), "Route arc_id out of range!"
 
     # 5. Save formatted output files
-    out_route_file = os.path.join(PREDICTIONS_OUT_DIR, f"{trip.trip_id}.route")
-    out_obs_file = os.path.join(PREDICTIONS_OUT_DIR, f"{trip.trip_id}_obs_arcs.txt")
+    out_route_file = safe_child(PREDICTIONS_OUT_DIR, f"{trip.trip_id}.route")
+    out_obs_file = safe_child(PREDICTIONS_OUT_DIR, f"{trip.trip_id}_obs_arcs.txt")
     if save_outputs:
         os.makedirs(PREDICTIONS_OUT_DIR, exist_ok=True)
         np.savetxt(out_route_file, np.array(reconstructed_route, dtype=np.int32), fmt="%d")
@@ -116,7 +118,7 @@ def predict_single_trip(
 
     map_html_path = None
     if generate_map:
-        map_html_path = os.path.join(MAPS_OUT_DIR, f"predicted_trip_{trip.trip_id}.html")
+        map_html_path = safe_child(MAPS_OUT_DIR, f"predicted_trip_{trip.trip_id}.html")
         generate_folium_map_for_trip(
             trip,
             clf_only_arcs=clf_pred_arcs,
@@ -135,7 +137,9 @@ def predict_single_trip(
         "n_reconstructed_route_arcs": int(len(reconstructed_route)),
         "route_continuity": float(hmm_stats["route_continuity"]),
         "strict_1hop_continuity": float(hmm_stats["strict_1hop_continuity"]),
-        "clf_only_continuity": float(compute_route_continuity(trip, clf_pred_arcs)["connected_continuity"]),
+        "clf_only_continuity": float(compute_route_continuity(trip, clf_pred_arcs, max_hops=hmm_cfg.max_bfs_hops)["connected_continuity"]),
+        "evaluation_protocol": "wta-lcs-v2",
+        "continuity_max_hops": hmm_cfg.max_bfs_hops,
         "inference_ms": float(inference_ms),
         "has_ground_truth": bool(trip.obs_ref_arcs is not None and len(trip.obs_ref_arcs) == n_obs),
         "output_route_file": out_route_file,
@@ -159,6 +163,7 @@ def predict_single_trip(
                 "macro_f1": macro_f1,
                 "candidate_miss_rate": float(candidates.candidate_miss_rate or 0.0),
                 "route_seq_f1": float(seq_metrics["route_seq_f1"]),
+                "route_set_f1": float(seq_metrics["route_set_f1"]),
                 "route_jaccard": float(seq_metrics["route_jaccard"]),
             }
         )

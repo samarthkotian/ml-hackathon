@@ -8,3 +8,6 @@ team_packages/
 evaluator_test/
 .env
 *.secret
+.test-deps/
+outputs/deployment/
+.test-tmp*/

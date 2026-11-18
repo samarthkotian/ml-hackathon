@@ -10,10 +10,15 @@ Run on Laptop 2:
 """
 import json
 import os
+import sys
+from pathlib import Path
 import requests
 import pandas as pd
 import streamlit as st
 import streamlit.components.v1 as components
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from src.ui_state import select_evaluation, request_evaluation
 
 st.set_page_config(
     page_title="PathSnap Evaluator Dashboard — SI No 107",
@@ -139,7 +144,9 @@ with col_btn:
         use_container_width=True,
     )
 
-if run_eval or "last_eval_result" not in st.session_state:
+evaluation_key = (api_url, selected_trip_obj["trip_id"], selected_trip_obj["partition"])
+selection_changed = select_evaluation(st.session_state, evaluation_key)
+if run_eval or selection_changed:
     with st.spinner(f"Requesting live route reconstruction for Trip `{selected_trip_obj['trip_id']}` from `{api_url}/evaluate`..."):
         try:
             payload = {
@@ -147,11 +154,10 @@ if run_eval or "last_eval_result" not in st.session_state:
                 "partition": selected_trip_obj["partition"],
                 "include_map_html": True,
             }
-            eval_resp = requests.post(f"{api_url}/evaluate", json=payload, timeout=30)
-            if eval_resp.status_code == 200:
-                st.session_state["last_eval_result"] = eval_resp.json()
-            else:
-                st.error(f"API Error ({eval_resp.status_code}): {eval_resp.text}")
+            request_evaluation(
+                st.session_state, evaluation_key,
+                lambda: requests.post(f"{api_url}/evaluate", json=payload, timeout=30),
+            )
         except Exception as exc:
             st.error(f"Request to Laptop 1 API failed: {exc}")
 
@@ -205,7 +211,7 @@ if res:
     st.markdown("### 🗺️ Interactive Folium Route Reconstruction Map")
     st.caption(
         "Use the layer control in the top-right corner of the map to toggle Raw GPS Observations (Blue), "
-        "Reference Ground-Truth Route (Green), Classifier-Only Predictions (Orange Dashed), and "
+        "Classifier-Only Predictions (Orange Dashed), and "
         "PathSnap HMM/Viterbi Reconstructed Route (Red)."
     )
     if res.get("folium_map_html"):

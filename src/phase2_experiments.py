@@ -133,6 +133,8 @@ def main() -> None:
     train_trips = load_partition("train", TRAIN_DIR)
     student_trips = load_partition("student_test", STUDENT_TEST_DIR)
     evaluator_trips = load_partition("evaluator_test", EVALUATOR_TEST_DIR)
+    if not train_trips or not student_trips or not evaluator_trips:
+        raise FileNotFoundError("Phase 2 requires train, student_test and evaluator_test data; see docs/EVALUATION_CORRECTIONS.md.")
     print(
         f"Loaded {len(train_trips)} train trips, {len(student_trips)} student_test trips, "
         f"and {len(evaluator_trips)} evaluator_test trips (from {EVALUATOR_TEST_DIR})."
@@ -295,6 +297,7 @@ def main() -> None:
     )
 
     exp_df = pd.DataFrame(exp_rows)
+    exp_df["evaluation_protocol"] = ["historical-v1"] + ["wta-lcs-v2"] * (len(exp_df) - 1)
     exp_df.to_csv(os.path.join(RESULTS_OUT_DIR, "phase1_vs_phase2_comparison.csv"), index=False)
     print("\n=== PHASE 1 vs PHASE 2 EXPERIMENT PROGRESSION ===")
     print(exp_df.to_string(index=False))
@@ -336,6 +339,7 @@ def main() -> None:
     eval_final_df.to_csv(os.path.join(RESULTS_OUT_DIR, "evaluator_test_results.csv"), index=False)
 
     meta["selected_model_name"] = winning_name
+    meta["evaluation_protocol"] = "wta-lcs-v2"
     meta["phase2_student_test_summary"] = stu_final_agg
     meta["phase2_evaluator_test_summary"] = eval_final_agg
     with open(os.path.join(MODELS_DIR, "model_metadata.json"), "w", encoding="utf-8") as f:

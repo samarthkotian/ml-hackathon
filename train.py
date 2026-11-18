@@ -60,6 +60,8 @@ def main() -> None:
     # 1. Load Raw Datasets
     print("\n[Step 1/7] Loading Training (80 trips) and Student-Testing (10 trips) partitions...")
     train_trips = load_partition("train")
+    if not train_trips:
+        raise FileNotFoundError("Training data is required in Data/Student folder/train; see docs/EVALUATION_CORRECTIONS.md.")
     test_trips = load_partition("student_test")
     print(f"  -> Loaded {len(train_trips)} training trips and {len(test_trips)} student-testing trips.")
 
@@ -158,7 +160,7 @@ def main() -> None:
         # Classifier-only pointwise predictions
         clf_best_k = np.argmax(trip_probs, axis=1)
         clf_pred_arcs = cands.cand_arcs[np.arange(n_obs), clf_best_k]
-        clf_cont = compute_route_continuity(trip, clf_pred_arcs)
+        clf_cont = compute_route_continuity(trip, clf_pred_arcs, max_hops=hmm_cfg.max_bfs_hops)
 
         clf_dedup_route = [int(clf_pred_arcs[0])]
         for a in clf_pred_arcs[1:]:
@@ -197,6 +199,7 @@ def main() -> None:
 
         hmm_rows.append(
             {
+                "evaluation_protocol": "wta-lcs-v2",
                 "trip_id": trip.trip_id,
                 "n_observations": n_obs,
                 "n_ref_route_arcs": len(trip.route) if trip.route is not None else 0,
@@ -250,6 +253,7 @@ def main() -> None:
     overall_hmm_top1 = float(total_hmm_hits / max(1, total_obs_count))
 
     hmm_summary = {
+        "evaluation_protocol": "wta-lcs-v2",
         "overall_clf_top1_accuracy": overall_clf_top1,
         "overall_hmm_top1_accuracy": overall_hmm_top1,
         "overall_clf_macro_f1": overall_clf_f1,
@@ -297,6 +301,7 @@ def main() -> None:
         json.dump(asdict(hmm_cfg), f, indent=2)
 
     metadata = {
+        "evaluation_protocol": "wta-lcs-v2",
         "team_info": TEAM_INFO,
         "random_seed": RANDOM_SEED,
         "selected_model_name": "Bayesian-Tuned LightGBM",

@@ -1,5 +1,14 @@
 # PathSnap: Distributed Map-Matching & Route Reconstruction (Phase 1 & Phase 2 Complete)
 
+> **Evaluation correction:** This branch uses `wta-lcs-v2`: fixed winner-takes-all
+> candidate scoring, raw cross-validation scores, a shared continuity hop limit,
+> and order-sensitive LCS route F1. Existing benchmark tables, plots, saved CSVs,
+> model metadata and PDFs are historical results from the earlier protocol;
+> their F1/CV/continuity values must not be presented as corrected results.
+> Student-test top-1 accuracies were independently checked and match the supplied
+> predictions. See [the correction notes](docs/EVALUATION_CORRECTIONS.md) for scope,
+> reproduction steps and deployment evidence requirements.
+
 **PES University — Department of Computer Science & Engineering (RR Campus)**  
 **Course:** UE24CS352A: Machine Learning Hackathon
 

@@ -6,6 +6,7 @@ import os
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple
 import numpy as np
+from src.paths import safe_child, validate_trip_id
 
 from src.config import (
     EARTH_RADIUS_M,
@@ -282,10 +283,11 @@ class TripData:
 
 def load_trip_from_dir(trip_dir: str, trip_id: str, partition: str = "unknown") -> TripData:
     """Load a single trip (.track, .nodes, .arcs, and optional .route) from disk."""
-    track_path = os.path.join(trip_dir, f"{trip_id}.track")
-    nodes_path = os.path.join(trip_dir, f"{trip_id}.nodes")
-    arcs_path = os.path.join(trip_dir, f"{trip_id}.arcs")
-    route_path = os.path.join(trip_dir, f"{trip_id}.route")
+    validate_trip_id(trip_id)
+    track_path = safe_child(trip_dir, f"{trip_id}.track")
+    nodes_path = safe_child(trip_dir, f"{trip_id}.nodes")
+    arcs_path = safe_child(trip_dir, f"{trip_id}.arcs")
+    route_path = safe_child(trip_dir, f"{trip_id}.route")
 
     track = np.loadtxt(track_path, dtype=np.float64)
     if track.ndim == 1:

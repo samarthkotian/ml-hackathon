@@ -18,6 +18,7 @@ import numpy as np
 from src.data_loader import TripData
 from src.candidates import TripCandidates
 
+DEFAULT_MAX_HOPS = 5
 
 @dataclass
 class HMMConfig:
@@ -32,7 +33,7 @@ class HMMConfig:
     backward_penalty: float = 3.5    # Penalty for moving backward along the same directed arc
     uturn_penalty: float = 4.5       # Penalty for immediate U-turn flip onto reverse-twin arc
     disconnected_penalty: float = 9.5  # Penalty for topologically disconnected jump
-    max_bfs_hops: int = 5            # Max intermediate graph hops searched
+    max_bfs_hops: int = DEFAULT_MAX_HOPS  # Max intermediate graph hops searched
 
 
 def _build_node_adjacency(trip: TripData) -> Dict[int, List[Tuple[int, int, float]]]:
@@ -241,7 +242,9 @@ def viterbi_decode_trip(
         if not reconstructed_route or reconstructed_route[-1] != a_curr:
             reconstructed_route.append(a_curr)
 
-    continuity = compute_route_continuity(trip, pred_obs_arcs, reach_map=reach_map)
+    continuity = compute_route_continuity(
+        trip, pred_obs_arcs, reach_map=reach_map, max_hops=config.max_bfs_hops
+    )
     stats = {
         "route_continuity": continuity["connected_continuity"],
         "strict_1hop_continuity": continuity["strict_1hop_continuity"],
@@ -254,6 +257,7 @@ def compute_route_continuity(
     trip: TripData,
     pred_obs_arcs: np.ndarray,
     reach_map: Optional[Dict[int, Dict[int, Tuple[int, float, List[int]]]]] = None,
+    max_hops: int = DEFAULT_MAX_HOPS,
 ) -> Dict[str, float]:
     """
     Compute topological route continuity of consecutive predicted road segments:
@@ -268,7 +272,7 @@ def compute_route_continuity(
 
     if reach_map is None:
         v_all = trip.arcs[np.unique(pred_obs_arcs), 1]
-        reach_map = _precompute_node_reachability(trip, v_all, max_hops=4)
+        reach_map = _precompute_node_reachability(trip, v_all, max_hops=max_hops)
 
     strict_ok = 0
     conn_ok = 0
@@ -284,7 +288,7 @@ def compute_route_continuity(
             if v1 == u2:
                 strict_ok += 1
                 conn_ok += 1
-            elif u2 in reach_map.get(v1, {}):
+            elif u2 in reach_map.get(v1, {}) and reach_map[v1][u2][0] <= max_hops:
                 conn_ok += 1
 
     return {
@@ -297,14 +301,17 @@ def compute_sequence_route_metrics(
     reconstructed_route: List[int], reference_route: Optional[np.ndarray]
 ) -> Dict[str, float]:
     """
-    Compare the reconstructed sequence of road segments against the ground-truth
-    .route sequence using segment-set Precision, Recall, F1, and Jaccard similarity.
+    Compare ordered routes using longest-common-subsequence (LCS) matches.
+
+    LCS precision/recall preserve traversal order and repeated segments. Set F1
+    and Jaccard are returned separately as explicitly unordered overlap scores.
     """
     if reference_route is None or len(reference_route) == 0:
         return {
             "route_seq_precision": 0.0,
             "route_seq_recall": 0.0,
             "route_seq_f1": 0.0,
+            "route_set_f1": 0.0,
             "route_jaccard": 0.0,
         }
 
@@ -313,8 +320,19 @@ def compute_sequence_route_metrics(
     inter = len(pred_set & ref_set)
     union = len(pred_set | ref_set)
 
-    prec = inter / max(1, len(pred_set))
-    rec = inter / max(1, len(ref_set))
+    # O(N*M) time, O(min(N,M)) memory; vectorize each DP row.
+    left = np.asarray(reconstructed_route, dtype=np.int64)
+    right = np.asarray(reference_route, dtype=np.int64)
+    if len(right) > len(left):
+        left, right = right, left
+    row = np.zeros(len(right) + 1, dtype=np.int32)
+    for arc in left:
+        previous = row.copy()
+        row[1:] = np.maximum(previous[1:], np.where(right == arc, previous[:-1] + 1, 0))
+        np.maximum.accumulate(row, out=row)
+    matches = int(row[-1])
+    prec = matches / max(1, len(reconstructed_route))
+    rec = matches / max(1, len(reference_route))
     f1 = (2 * prec * rec / (prec + rec)) if (prec + rec) > 0 else 0.0
     jaccard = inter / max(1, union)
 
@@ -322,5 +340,6 @@ def compute_sequence_route_metrics(
         "route_seq_precision": float(prec),
         "route_seq_recall": float(rec),
         "route_seq_f1": float(f1),
+        "route_set_f1": float(2 * inter / max(1, len(pred_set) + len(ref_set))),
         "route_jaccard": float(jaccard),
     }

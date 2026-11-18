@@ -23,6 +23,7 @@ def generate_folium_map_for_trip(
     hmm_reconstructed_route: Optional[List[int]] = None,
     out_html_path: Optional[str] = None,
     max_road_arcs: int = 2500,
+    include_reference: bool = True,
 ) -> folium.Map:
     """
     Create an interactive Folium geographical map showing:
@@ -94,7 +95,7 @@ def generate_folium_map_for_trip(
         return lines
 
     # 2. Reference Route Layer (Green)
-    if trip.route is not None and len(trip.route) > 0:
+    if include_reference and trip.route is not None and len(trip.route) > 0:
         fg_ref = folium.FeatureGroup(name="2. Reference Ground-Truth Route (.route)", show=True)
         ref_lines = _arcs_to_latlon_lines(list(trip.route))
         if ref_lines:
@@ -196,6 +197,12 @@ def generate_folium_map_for_trip(
     folium.LayerControl(collapsed=False).add_to(fmap)
 
     # Add floating HTML legend
+    reference_legend = """
+        <div style="margin-bottom: 4px;">
+            <span style="display:inline-block;width:18px;height:5px;background:#16a34a;vertical-align:middle;margin-right:6px;"></span>
+            Reference Ground-Truth Route (.route)
+        </div>
+    """ if include_reference and trip.route is not None and len(trip.route) > 0 else ""
     legend_html = f"""
     <div style="
         position: fixed;
@@ -217,10 +224,7 @@ def generate_folium_map_for_trip(
             <span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:#3b82f6;border:2px solid #1d4ed8;vertical-align:middle;margin-right:6px;"></span>
             Raw Noisy GPS Observations ({len(trip.track)} pts)
         </div>
-        <div style="margin-bottom: 4px;">
-            <span style="display:inline-block;width:18px;height:5px;background:#16a34a;vertical-align:middle;margin-right:6px;"></span>
-            Reference Ground-Truth Route (.route)
-        </div>
+        {reference_legend}
         <div style="margin-bottom: 4px;">
             <span style="display:inline-block;width:18px;height:4px;background:#dc2626;vertical-align:middle;margin-right:6px;"></span>
             PathSnap Predicted Route (Classifier + HMM/Viterbi)
