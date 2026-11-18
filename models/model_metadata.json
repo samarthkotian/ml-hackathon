@@ -1,0 +1,116 @@
+{
+  "team_info": {
+    "team_id": "SI No 107",
+    "members": [
+      [
+        "PES1UG24CS395",
+        "Saatvik Gupta"
+      ],
+      [
+        "PES1UG24CS396",
+        "Sagar A Walikar"
+      ],
+      [
+        "PES1UG24CS406",
+        "Samarth Kotian"
+      ],
+      [
+        "PES1UG24CS407",
+        "Samarth M H"
+      ]
+    ]
+  },
+  "random_seed": 107,
+  "selected_model_name": "Phase-2 GBDT Ensemble (Bayesian-Tuned LightGBM + XGBoost)",
+  "feature_names": [
+    "perp_dist_m",
+    "dist_rank",
+    "dist_ratio_to_min",
+    "dist_diff_to_min",
+    "dist_zscore_in_step",
+    "dist_to_second_best_gap",
+    "proj_alpha",
+    "endpoint_clamp_overshoot",
+    "dist_to_from_node_m",
+    "dist_to_to_node_m",
+    "arc_length_m",
+    "heading_cos",
+    "heading_sin",
+    "heading_abs_diff_rad",
+    "smoothed_heading_cos",
+    "gps_speed_mps",
+    "gps_accel_mps2",
+    "gps_dt_sec",
+    "from_node_in_deg",
+    "to_node_out_deg",
+    "prev_connected_min_dist",
+    "next_connected_min_dist",
+    "is_prev_top1_connected",
+    "is_next_top1_connected",
+    "window3_mean_perp_dist"
+  ],
+  "top_k_candidates": 8,
+  "best_hyperparameters": {
+    "n_estimators": 240,
+    "learning_rate": 0.08081617154900661,
+    "num_leaves": 32,
+    "max_depth": 12,
+    "min_child_samples": 68,
+    "subsample": 0.7512146758551227,
+    "colsample_bytree": 0.8584881140533522,
+    "reg_alpha": 3.460150967638197,
+    "reg_lambda": 0.0018234595995360368
+  },
+  "best_cv_macro_f1": 0.915989409438884,
+  "hmm_summary": {
+    "overall_clf_top1_accuracy": 0.8875782881002088,
+    "overall_hmm_top1_accuracy": 0.9112734864300627,
+    "overall_clf_macro_f1": 0.937095954773122,
+    "overall_hmm_macro_f1": 0.9506661313152948,
+    "mean_clf_route_continuity": 0.9853786140470776,
+    "mean_hmm_route_continuity": 0.9965881715813178,
+    "mean_clf_strict_1hop_continuity": 0.9497367325790103,
+    "mean_hmm_strict_1hop_continuity": 0.9763297341694838,
+    "mean_clf_seq_f1": 0.8815415309678964,
+    "mean_hmm_seq_f1": 0.9394290458440597,
+    "mean_viterbi_decode_ms": 156.95513001992367
+  },
+  "eda_summary": {
+    "n_train_trips": 80,
+    "n_student_test_trips": 10,
+    "total_train_obs": 208417,
+    "total_test_obs": 19160,
+    "pct_exact_1s": 96.68684364381261,
+    "median_gps_error_m": 4.987213913895719,
+    "p95_gps_error_m": 18.953617761002306,
+    "median_segment_len_m": 25.651657305399027,
+    "fig1_path": "D:\\Hackathon ML\\outputs\\eda\\eda_dataset_overview.png",
+    "fig2_path": "D:\\Hackathon ML\\outputs\\eda\\eda_spatial_and_network.png"
+  },
+  "candidate_miss_rate_train": 0.02654845756375952,
+  "candidate_miss_rate_student_test": 0.005204412513528623,
+  "phase2_student_test_summary": {
+    "mean_clf_top1_accuracy": 0.9267205167132497,
+    "mean_hmm_top1_accuracy": 0.9446525558283317,
+    "overall_clf_top1_accuracy": 0.9311586638830898,
+    "overall_hmm_top1_accuracy": 0.949634655532359,
+    "mean_macro_f1": 0.9696324695996799,
+    "mean_route_continuity": 0.9962427388933218,
+    "mean_clf_continuity": 0.9845389001716889,
+    "mean_route_seq_f1": 0.9473500520714371,
+    "mean_candidate_miss_rate": 0.004721428587509735,
+    "mean_inference_ms": 328.258619987173
+  },
+  "phase2_evaluator_test_summary": {
+    "mean_clf_top1_accuracy": 0.9368266692257086,
+    "mean_hmm_top1_accuracy": 0.9457189187655162,
+    "overall_clf_top1_accuracy": 0.9401240215512859,
+    "overall_hmm_top1_accuracy": 0.946579241638711,
+    "mean_macro_f1": 0.9710380391695033,
+    "mean_route_continuity": 0.9962091607475024,
+    "mean_clf_continuity": 0.9859561877484182,
+    "mean_route_seq_f1": 0.9293714298163882,
+    "mean_candidate_miss_rate": 0.007679064809898472,
+    "mean_inference_ms": 420.9090899967123
+  }
+}
