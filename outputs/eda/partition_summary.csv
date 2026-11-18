@@ -1,0 +1,3 @@
+partition,n_trips,total_gps_obs,mean_gps_obs_per_trip,median_gps_obs_per_trip,mean_nodes_per_trip,mean_arcs_per_trip,mean_route_len,total_missing_values,mean_1hz_pct,trips_with_gaps_gt_5s,mean_route_connected_pct,median_gps_noise_m,p95_gps_noise_m
+train,80,208417,2605.2125,1529.0,24168.5625,48461.3,391.7,0,93.83413050608627,45,99.93461551444497,4.599410503554065,14.220426603235271
+student_test,10,19160,1916.0,1420.0,9068.9,18504.1,347.7,0,98.19896936551982,2,99.97319034852546,4.7260520920249185,15.770648663267211
