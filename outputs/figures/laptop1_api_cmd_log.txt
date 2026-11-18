@@ -1,0 +1,51 @@
+
+==================================================================================
+ [LAPTOP 1 — PATHSNAP FASTAPI SERVER ONLINE]
+ Team: SI No 107 | Model: Phase-2 GBDT Ensemble (Bayesian-Tuned LightGBM + XGBoost)
+ Available Evaluation Trips Discovered: 20
+==================================================================================
+
+[13:50:37] GET /health from 192.168.1.24 -> OK (20 trips ready)
+[13:50:37] GET /trips from 192.168.1.24 -> Returning 20 evaluation trip options
+
+----------------------------------------------------------------------------------
+[2026-11-18 13:50:37] INCOMING INFERENCE REQUEST: POST /evaluate
+  Client IP (Laptop 2): 192.168.1.24 | Requested trip_id: 00000000 (partition=student_test)
+  [Step 1] Loaded Trip 00000000: 2503 GPS pts, 8542 road nodes, 18196 directed arcs
+  [Step 2] Pipeline Executed in 309.0 ms (Candidate Gen + 25 Features + Phase-2 GBDT Ensemble (Bayesian-Tuned LightGBM + XGBoost) + Log-Viterbi)
+  [Step 3] Server-Side Evaluation vs Internal Reference Route:
+           -> Observation-Level Top-1 Accuracy (HMM/Viterbi): 94.85%
+           -> Observation-Level Top-1 Accuracy (Clf-Only):    94.29% (+0.56%)
+           -> Candidate Macro F1-Score:                       0.9726
+           -> Topological Route Continuity (HMM/Viterbi):     99.72% (Clf-Only: 99.20%)
+  [Step 4] Returning HTTP 200 OK to 192.168.1.24 (Total Roundtrip: 800.8 ms)
+----------------------------------------------------------------------------------
+
+
+----------------------------------------------------------------------------------
+[2026-11-18 13:50:37] INCOMING INFERENCE REQUEST: POST /evaluate
+  Client IP (Laptop 2): 192.168.1.24 | Requested trip_id: 00000007 (partition=student_test)
+  [Step 1] Loaded Trip 00000007: 1354 GPS pts, 2061 road nodes, 4369 directed arcs
+  [Step 2] Pipeline Executed in 246.8 ms (Candidate Gen + 25 Features + Phase-2 GBDT Ensemble (Bayesian-Tuned LightGBM + XGBoost) + Log-Viterbi)
+  [Step 3] Server-Side Evaluation vs Internal Reference Route:
+           -> Observation-Level Top-1 Accuracy (HMM/Viterbi): 99.48%
+           -> Observation-Level Top-1 Accuracy (Clf-Only):    97.42% (+2.07%)
+           -> Candidate Macro F1-Score:                       0.9970
+           -> Topological Route Continuity (HMM/Viterbi):     100.00% (Clf-Only: 99.93%)
+  [Step 4] Returning HTTP 200 OK to 192.168.1.24 (Total Roundtrip: 362.5 ms)
+----------------------------------------------------------------------------------
+
+
+----------------------------------------------------------------------------------
+[2026-11-18 13:50:38] INCOMING INFERENCE REQUEST: POST /evaluate
+  Client IP (Laptop 2): 192.168.1.24 | Requested trip_id: 00000052 (partition=student_test)
+  [Step 1] Loaded Trip 00000052: 262 GPS pts, 1770 road nodes, 3577 directed arcs
+  [Step 2] Pipeline Executed in 41.7 ms (Candidate Gen + 25 Features + Phase-2 GBDT Ensemble (Bayesian-Tuned LightGBM + XGBoost) + Log-Viterbi)
+  [Step 3] Server-Side Evaluation vs Internal Reference Route:
+           -> Observation-Level Top-1 Accuracy (HMM/Viterbi): 98.09%
+           -> Observation-Level Top-1 Accuracy (Clf-Only):    96.18% (+1.91%)
+           -> Candidate Macro F1-Score:                       0.9891
+           -> Topological Route Continuity (HMM/Viterbi):     99.62% (Clf-Only: 97.70%)
+  [Step 4] Returning HTTP 200 OK to 192.168.1.24 (Total Roundtrip: 73.4 ms)
+----------------------------------------------------------------------------------
+
