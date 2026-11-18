@@ -1,0 +1,10 @@
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.ipynb_checkpoints/
+outputs/.mplconfig/
+team_packages/
+evaluator_test/
+.env
+*.secret
